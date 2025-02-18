@@ -1,18 +1,32 @@
 import tod_icon from "../assets/todo_icon.png";
 import TodoItems from "./TodoItems";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 
 const Todo = () => {
   const [tasks, setTasks] = useState([]);
-  const [error, setError] = useState(""); // Error handling for toast
+  const [error, setError] = useState("");
   const inputRef = useRef();
 
+  // Load tasks from Local Storage on component mount
+  useEffect(() => {
+    const savedTasks = JSON.parse(localStorage.getItem("tasks"));
+    if (savedTasks) {
+      setTasks(savedTasks);
+    }
+  }, []);
+
+  // Save tasks to Local Storage whenever tasks change
+  useEffect(() => {
+    localStorage.setItem("tasks", JSON.stringify(tasks));
+  }, [tasks]);
+
+  // Function to add a new task
   const add = () => {
     const inputText = inputRef.current.value.trim();
-    
+
     if (inputText === "") {
       setError("Input text is required");
-      setTimeout(() => setError(""), 2000); // Hide error after 2 seconds
+      setTimeout(() => setError(""), 2000);
       return;
     }
 
@@ -24,6 +38,20 @@ const Todo = () => {
 
     setTasks((prev) => [...prev, newTodo]);
     inputRef.current.value = "";
+  };
+
+  // Function to delete a task
+  const deleteTask = (taskId) => {
+    setTasks((prev) => prev.filter((task) => task.id !== taskId));
+  };
+
+  // Function to toggle task completion
+  const toggleComplete = (taskId) => {
+    setTasks((prev) =>
+      prev.map((task) =>
+        task.id === taskId ? { ...task, isComplete: !task.isComplete } : task
+      )
+    );
   };
 
   return (
@@ -62,7 +90,14 @@ const Todo = () => {
       {/* ---------------- To-Do List ----------------- */}
       <div className="mt-4 space-y-3">
         {tasks.map((task) => (
-          <TodoItems key={task.id} text={task.text} />
+          <TodoItems
+            key={task.id}
+            id={task.id}
+            text={task.text}
+            isComplete={task.isComplete}
+            deleteTask={deleteTask}
+            toggleComplete={toggleComplete}
+          />
         ))}
       </div>
     </div>
